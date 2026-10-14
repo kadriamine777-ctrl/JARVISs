@@ -9,33 +9,37 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
 
       - name: Install system dependencies
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip openjdk-17-jdk zip unzip ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+          sudo apt-get update
+          sudo apt-get install -y python3-pip openjdk-17-jdk zip unzip libffi-dev libssl-dev libbz2-dev libsqlite3-dev zlib1g-dev libncurses5-dev
           pip install --upgrade pip
-          pip install buildozer cython==0.29.33 virtualenv
+          pip install cython==0.29.33 buildozer
 
       - name: Build with Buildozer
         run: |
-          # حاول البناء الكامل مع moviepy
-          buildozer -v android debug || (
+          yes | buildozer -v android debug || (
             echo "⚠️ البناء الكامل فشل، نحاول البناء الخفيف بدون moviepy..."
-            # بناء خفيف بدون moviepy لو فشل
             cp buildozer.spec buildozer.spec.full
-            sed -i 's/requirements =.*/requirements = python3,kivy==2.2.0,plyer,pyjnius,Pillow,gTTS,requests/' buildozer.spec
-            buildozer -v android debug
+            sed -i 's/requirements =.*/requirements = python3,kivy,plyer,pyjnius,Pillow,gTTS,requests/' buildozer.spec
+            yes | buildozer -v android debug
           )
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: JARVIS-ULTIMATE-APK
           path: bin/*.apk
